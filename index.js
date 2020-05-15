@@ -31,8 +31,6 @@ res.send(msg);
 function upload () {
     var myjson;
     
-    //return myjson; }
-//return myjson; 
     }
 
 
