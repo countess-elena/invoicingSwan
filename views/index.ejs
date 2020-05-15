@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js"></script>
+    
+   
+    <title>Invoicing</title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+
+    <h1>Invoicing в EJS </h1>
+
+    <div id="root"></div>
+
+<form method="GET" >
+    <label for="booking"> Booking N <label>
+        <input type="text" name = 'booking' id="booking">
+        <button type="button" id="button" > Submit </button>
+
+</form>
+<!--
+<script>
+$("button").click(function(){
+            
+    var booking=$("#booking").val();
+
+    console.log('submitted' + booking);
+        $.get("/xlstojson?booking=" + booking, function(data, status){
+          console.log ("\nStatus: " + status);
+        });
+      }); 
+</script>
+-->
+<% if (resp.length>0) {%>
+        <p> 
+            <ul>
+            <% resp.forEach(function(item) {%>
+                <li> <%=item['cntr number'] +" "+ item.rate%></li>
+                <%}) %>
+            </ul>
+            </p>
+            <%} 
+            else {
+                %>
+                <p>No RESP</p>
+            <%}%>
+
+    
+</body>
+<html>
