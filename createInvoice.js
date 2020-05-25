@@ -1,14 +1,17 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
-
+var currency="";
 //const blobStream = require('blob-stream');
 
 function createInvoice(invoice, path) {
 // Create a document
 const doc = new PDFDocument({ size: "A4", margin: 50 });
+currency=invoice.items[0].currency;
+console.log (currency);
 
 generateHeader(doc);
 generateCustomerInformation(doc, invoice);
+generateBookingInfo (doc, invoice);
 generateInvoiceTable(doc, invoice);
 generateFooter(doc);
 
@@ -41,6 +44,26 @@ stream.on('finish', function() {
           .text("New York, NY, 10025", 200, 80, { align: "right" })
           .moveDown();
       }
+
+      function generateBookingInfo (doc, invoice) {
+        doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .text("Booking Number: ", 50, 260)
+        .text(invoice.general.bookingno, 50, 280)
+        .fontSize(10)
+        .font("Helvetica")
+        .text("POL: " + invoice.general.POL, 200, 260)
+        .font("Helvetica")
+        .fontSize(10)
+        .text("POD: " +invoice.general.POD, 200, 280)
+        .font("Helvetica")
+        .fontSize(10)
+        .text("Cntrs: " + invoice.general.cntr_numbers, 350, 260)
+        .font("Helvetica")
+
+        generateHr(doc, 300);
+      }
       
       function generateCustomerInformation(doc, invoice) {
         doc
@@ -60,12 +83,14 @@ stream.on('finish', function() {
           .font("Helvetica")
           .text("Invoice Date:", 50, customerInformationTop + 15)
           .text(formatDate(new Date()), 150, customerInformationTop + 15)
+          /*
           .text("Balance Due:", 50, customerInformationTop + 30)
           .text(
             formatCurrency(invoice.subtotal - invoice.paid),
             150,
             customerInformationTop + 30
           )
+          */
       
           .font("Helvetica-Bold")
           .text(invoice.shipping.name, 300, customerInformationTop)
@@ -177,7 +202,7 @@ stream.on('finish', function() {
         doc
           .fontSize(10)
           .text(item, 50, y)
-          .text(description, 150, y)
+          .text(description, 75, y)
           .text(unitCost, 280, y, { width: 90, align: "right" })
           .text(quantity, 370, y, { width: 90, align: "right" })
           .text(lineTotal, 0, y, { align: "right" });
@@ -193,7 +218,13 @@ stream.on('finish', function() {
       }
       
       function formatCurrency(cents) {
-        return "$" + (cents / 100).toFixed(2);
+        
+        if (currency == "EUR") {
+          console.log ("curr" + currency)
+          return "EUR "+ (cents / 100).toFixed(2);
+        }
+        console.log ("curr" + currency)
+        return "USD " + (cents / 100).toFixed(2);
       }
       
       function formatDate(date) {

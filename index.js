@@ -4,7 +4,7 @@ var app = express();
 app.set ('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
-
+var Invoice = require('./Mongo/Invoice.js');
 
 const fileUpload = require('express-fileupload');
 const cors = require('cors');
@@ -30,8 +30,9 @@ res.send(msg);
 
 function upload () {
     var myjson;
-    
     }
+
+
 
 
 
@@ -39,11 +40,11 @@ app.use ('/xlstojson', (req, res)=>{
     //преобразование из эксель в Json
     xlsxj = require("xlsx-to-json-lc");
     xlsxj({
-      input: "uploads/excelmiddle.xlsb", 
-      output: "outputmiddle.json",
+      input: "uploads/excelmiddleimp.xlsx", 
+      output: "outputExcelmiddleImp.json",
       //input: "uploads/excelsmall.xlsx", 
       //output: "outputsmall.json",
-      sheet: "EXPORT",
+      //sheet: "IMPORT",
       lowerCaseHeaders:true //converts excel header rows into lowercase as json keys
     }, 
     function(err, result) {
@@ -74,10 +75,22 @@ app.use ('/xlstojson', (req, res)=>{
                     console.log(resp);
                     resp.forEach(function(item) {
                         cntrs.push(
-                            {'cntr_number': item['cntr number'], 
+                            {
+                            'cntr_number': item['containernumber'], 
                             'type': item['cntr type'],
-                            'rate': item.rate});
+                            'rate': item['rate to client'],
+                            'Client': item['client'],
+                            'bookingno': item['ourbookingref'],
+                            'POL': item.pol,
+                            'extra': item['extra'],
+                            'POD': item['to'],
+                            'docs': item['docs incl/excl'],
+                            'ETA': item['eta stp'],
+                            "ourcompany": item ['ourcompany']
+
+                        });
                         })
+                console.log(cntrs)
                 res.json(cntrs);}            
         else {
             res.json ({message: 'no booking number'});
@@ -136,132 +149,99 @@ var workbook = XLSX.readFile('uploads/Imp, Exp, Cross bookings 2020.xlsb');
 res.json ({'msg': "uploaded xls"}); 
 });
 
+
 require('pdfkit') ;
+
+function invoiceToDB (invoice) {
+    
+    //var Invoice = mongoose.model('Invoice', invoiceSchema);
+    var invContent = [];
+    for (i = 0; i < invoice.items.length; i++) {
+        const item = invoice.items[i];
+        invContent.push({
+            cntrs: item.cntrs, 
+            curr: item.currency,
+            price: item.amount,
+            qty: item.quantity,
+            service: item.description
+        })}
+    Invoice = new Invoice ({
+    invNumber: invoice.invoice_nr,
+    booking_no: invoice.general.bookingno,
+    date: 24/05/2020,
+    Client: invoice.shipping.name,
+    ourCompany: "SLOY",
+	invContent: invContent
+    })
+    
+        Invoice.save (function(err, invoice) {
+            if (err) {
+                throw (err);
+                }
+                console.log (invoice);
+        });
+        
+ console.log ("client: " + invoice.shipping.name, "POL: "+ invoice.general.POL);
+
+}
 
 //загрузка пдф
 app.use('/test', (req, res) => {
+    var invContent =JSON.parse(req.query.invContent)
+//var description = invContent[0]["service"] + "; " + invContent[0]["cntrs"];
+var cntr_numbers =JSON.parse(req.query.cntr_numbers);
+cntr_numbers=cntr_numbers.cntrs;
+var apiResponce =JSON.parse(req.query.apiResponce);
+let firstline = apiResponce[0];
+console.log("firstline: " + firstline.toString());
+let newinvContent = [];
+let total=0; 
+let number=0;
+invContent.forEach(function(line){
+    total+=Number(line["price"])*Number(line["qty"])*100;
+    number+=1;
+    newinvContent.push ({
+        item: number, 
+        description: line["service"] + "; " + line["cntrs"],
+        cntrs: line["cntrs"],
+        quantity: line ["qty"],
+        currency: line.curr,
+        amount: Number(line["price"])*Number(line["qty"])*100,
+        type: line.type
+    })
+})
+
+//console.log (newinvContent);
 
     const {createInvoice} = require("./createInvoice.js");
 
     const invoice = {
       shipping: {
-        name: "Elena yus",
+        name: firstline.Client,
         address: "Reshetnikova",
         city: "Stp",
         state: "CA",
-        country: "US",
+        country: "Russia",
         postal_code: 94111
       },
-      items: [
-        {
-          item: "1",
-          description: "Freight",
-          quantity: 1,
-          amount: 5000
-        },
-        {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-          {
-            item: "1",
-            description: "Freight",
-            quantity: 1,
-            amount: 5000
-          },
-        {
-          item: "USB_EXT",
-          description: "USB Cable Extender",
-          quantity: 1,
-          amount: 2000
-        }
-      ],
-      subtotal: 8000,
+      general: {
+        POL: firstline.POL,
+        POD: firstline.POD,
+        ETA: firstline.ETA,
+        bookingno: firstline.bookingno,
+        client: firstline.Client,
+        cntr_numbers: cntr_numbers,
+        currency: invContent[0].currency
+      },
+      items: newinvContent,
+      
+      subtotal: total,
       paid: 0,
-      invoice_nr: 1234
+      invoice_nr: 1239
     };
     
     createInvoice(invoice, "invoice.pdf");
+    invoiceToDB (invoice);
 
 
  res.json ({'msg': "check pdf file"}); 
