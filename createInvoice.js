@@ -9,7 +9,7 @@ const doc = new PDFDocument({ size: "A4", margin: 50 });
 currency=invoice.items[0].currency;
 console.log (currency);
 
-generateHeader(doc);
+generateHeader(doc, invoice);
 generateCustomerInformation(doc, invoice);
 generateBookingInfo (doc, invoice);
 generateInvoiceTable(doc, invoice);
@@ -32,14 +32,14 @@ stream.on('finish', function() {
   */
 };
 
-    function generateHeader(doc) {
+    function generateHeader(doc, invoice) {
         doc
           .image("548187154.jpeg", 50, 45, { width: 50 })
           .fillColor("#444444")
           .fontSize(20)
-          .text("SWAN", 110, 57)
+          .text(invoice.shipping.ourCompany, 110, 57)
           .fontSize(10)
-          .text("SWAN", 200, 50, { align: "right" })
+          .text(invoice.shipping.ourCompany, 200, 50, { align: "right" })
           .text("123 Main Street", 200, 65, { align: "right" })
           .text("New York, NY, 10025", 200, 80, { align: "right" })
           .moveDown();
@@ -96,14 +96,19 @@ stream.on('finish', function() {
           .text(invoice.shipping.name, 300, customerInformationTop)
           .font("Helvetica")
           .text(invoice.shipping.address, 300, customerInformationTop + 15)
+          
           .text(
+            /*
             invoice.shipping.city +
               ", " +
               invoice.shipping.state +
               ", " +
               invoice.shipping.country,
+              
             300,
+            
             customerInformationTop + 30
+            */
           )
           .moveDown();
       

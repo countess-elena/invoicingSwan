@@ -4,7 +4,8 @@ var app = express();
 app.set ('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
-var Invoice = require('./Mongo/Invoice.js');
+var {Invoice} = require('./Mongo/Invoice.js');
+var {Client} = require('./Mongo/Invoice.js');
 
 const fileUpload = require('express-fileupload');
 const cors = require('cors');
@@ -32,7 +33,45 @@ function upload () {
     var myjson;
     }
 
+function newClient (req){
+    console.log("req: "+req);
+    let newClient = new Client ({
+        name: req.clName,
+        address: req.clAddress,
+        bank: req.clBank,
+        ourClientName: req.clourClient
 
+    })
+
+
+    newClient.save (function(err, client) {
+        if (err) {
+            throw (err);
+            }
+            console.log (newClient);
+    });
+}
+
+app.use ('/newClient', (req, res) =>{
+    var obj = req.query.myobj;
+    obj = JSON.parse (obj)
+    console.log("reqqueryobj" + obj.clName);
+
+    newClient (obj);
+
+    res.json ({msg: 'client is saved to DB'});
+});
+
+app.use ('/clientList', (req, res) => {
+
+    Client.find({}, 'name address', function (err, docs){
+        if (err) return console.log (err);
+
+        //console.log(docs)
+        res.json (docs);
+    });    
+    
+})
 
 
 
@@ -153,8 +192,6 @@ res.json ({'msg': "uploaded xls"});
 require('pdfkit') ;
 
 function invoiceToDB (invoice) {
-    
-    //var Invoice = mongoose.model('Invoice', invoiceSchema);
     var invContent = [];
     for (i = 0; i < invoice.items.length; i++) {
         const item = invoice.items[i];
@@ -169,8 +206,8 @@ function invoiceToDB (invoice) {
     invNumber: invoice.invoice_nr,
     booking_no: invoice.general.bookingno,
     date: 24/05/2020,
-    Client: invoice.shipping.name,
-    ourCompany: "SLOY",
+    client: invoice.shipping.client_id,
+    ourCompany: invoice.shipping.ourCo,
 	invContent: invContent
     })
     
@@ -185,18 +222,45 @@ function invoiceToDB (invoice) {
 
 }
 
+
+app.use('/getinvoice', (req,res) => {
+    var id="5ed1521057c5c13804a8d01f";
+    //Invoice.findOne ({invNumber: '1251'}, function (err, docs) {
+    Invoice.findOne ({invNumber: '1258'}).populate('client').exec (function (err, docs) {
+        //if (err) throw (err);
+        //else {
+        console.log(docs);
+        console.log (docs.client.name);
+        res.json(docs); }
+)})
+
+function getClientName (clientId) {
+    console.log(clientId);
+var client = Client.findById (clientId, 'name').exec();
+return client
+}
+
 //загрузка пдф
 app.use('/test', (req, res) => {
+
     var invContent =JSON.parse(req.query.invContent)
 //var description = invContent[0]["service"] + "; " + invContent[0]["cntrs"];
 var cntr_numbers =JSON.parse(req.query.cntr_numbers);
 cntr_numbers=cntr_numbers.cntrs;
+var ourCo = req.query.ourCo;
+//console.log(ourCo);
+var client=req.query.client; 
+//console.log (client);
+client=client.split(",");
+//console.log(client); 
 var apiResponce =JSON.parse(req.query.apiResponce);
 let firstline = apiResponce[0];
 console.log("firstline: " + firstline.toString());
 let newinvContent = [];
 let total=0; 
 let number=0;
+
+
 invContent.forEach(function(line){
     total+=Number(line["price"])*Number(line["qty"])*100;
     number+=1;
@@ -207,22 +271,28 @@ invContent.forEach(function(line){
         quantity: line ["qty"],
         currency: line.curr,
         amount: Number(line["price"])*Number(line["qty"])*100,
-        type: line.type
+        type: line.type,
+        //client: clientId
     })
 })
 
 //console.log (newinvContent);
 
     const {createInvoice} = require("./createInvoice.js");
+//ar clientId = invContent[0].client;
+
+//console.log (client.name); 
 
     const invoice = {
       shipping: {
-        name: firstline.Client,
-        address: "Reshetnikova",
-        city: "Stp",
-        state: "CA",
-        country: "Russia",
-        postal_code: 94111
+        name: client[1],
+        client_id: client[0],
+        address: client[2],
+        //city: "Stp",
+        //state: "CA",
+        //country: "Russia",
+        //postal_code: 94111, 
+        ourCompany: ourCo
       },
       general: {
         POL: firstline.POL,
@@ -237,7 +307,7 @@ invContent.forEach(function(line){
       
       subtotal: total,
       paid: 0,
-      invoice_nr: 1239
+      invoice_nr: 1280
     };
     
     createInvoice(invoice, "invoice.pdf");
