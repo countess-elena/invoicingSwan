@@ -35,4 +35,4 @@ var invoiceSchema = new Schema( {
     let Client = mongoose.model('Client', ClientSchema);
     let Invoice = mongoose.model('Invoice', invoiceSchema);
 
-module.exports = {Client: Client, Invoice: Invoice};
+module.exports = {Client: Client, invoicem: Invoice}

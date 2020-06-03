@@ -4,7 +4,7 @@ var app = express();
 app.set ('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static('public'));
-var {Invoice} = require('./Mongo/Invoice.js');
+var {invoicem} = require('./Mongo/Invoice.js');
 var {Client} = require('./Mongo/Invoice.js');
 
 const fileUpload = require('express-fileupload');
@@ -191,7 +191,24 @@ res.json ({'msg': "uploaded xls"});
 
 require('pdfkit') ;
 
-function invoiceToDB (invoice) {
+app.use ('/getInvoices', (req,res)=>{
+invoicem.find({}).sort('-invNumber').exec (function (err,doc){
+    res.json(doc);
+})
+
+}
+
+)
+
+function testfind(invoice) {
+    invoicem.find ({}, 'invNumber').sort('-invNumber').exec (function(err, doc){
+        invoiceToDB(invoice, doc);
+    })
+}
+
+function invoiceToDB (invoice, doc) {
+    console.log ('testfind: ' + doc)
+
     var invContent = [];
     for (i = 0; i < invoice.items.length; i++) {
         const item = invoice.items[i];
@@ -202,8 +219,11 @@ function invoiceToDB (invoice) {
             qty: item.quantity,
             service: item.description
         })}
-    Invoice = new Invoice ({
-    invNumber: invoice.invoice_nr,
+    
+        var maxNumber = doc[0].invNumber;
+        
+    Invoice = new invoicem ({
+    invNumber: maxNumber+1,
     booking_no: invoice.general.bookingno,
     date: 24/05/2020,
     client: invoice.shipping.client_id,
@@ -217,6 +237,7 @@ function invoiceToDB (invoice) {
                 }
                 console.log (invoice);
         });
+
         
  console.log ("client: " + invoice.shipping.name, "POL: "+ invoice.general.POL);
 
@@ -311,7 +332,7 @@ invContent.forEach(function(line){
     };
     
     createInvoice(invoice, "invoice.pdf");
-    invoiceToDB (invoice);
+    testfind (invoice);
 
 
  res.json ({'msg': "check pdf file"}); 
