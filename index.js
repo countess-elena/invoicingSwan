@@ -339,6 +339,9 @@ invContent.forEach(function(line){
     });
       
 
-app.listen(2000, () => {
-	console.log('Listening on port 2000');
-    });
+    let port = process.env.PORT;
+    if (port == null || port == "") {
+      port = 2000;
+    }
+    app.listen(port);
+    
