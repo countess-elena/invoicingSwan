@@ -18,16 +18,18 @@ var ClientSchema = new Schema( {
 var invoiceSchema = new Schema( {
     invNumber: {type: Number, required: true, unique: true},
     booking_no: String,
-    date: Date,
+    date: {type: Date, default: Date.now},
     client: {type:mongoose.Schema.Types.ObjectId, ref:'Client'},
     ourCompany: String,
+    sum: Number,
 	invContent: [
         {
             cntrs: [String], 
             curr: String,
             price: Number,
             qty: Number,
-            service: String
+            service: String,
+            
         }
     ],
 	

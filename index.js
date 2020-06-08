@@ -192,7 +192,9 @@ res.json ({'msg': "uploaded xls"});
 require('pdfkit') ;
 
 app.use ('/getInvoices', (req,res)=>{
-invoicem.find({}).sort('-invNumber').exec (function (err,doc){
+invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (function (err,doc){
+    //let resp = JSON.parse(doc); 
+    console.log(doc);
     res.json(doc);
 })
 
@@ -206,8 +208,17 @@ function testfind(invoice) {
     })
 }
 
+function formatDate(date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return day + "/" + month + "/"  + year;
+      }
+
 function invoiceToDB (invoice, doc) {
     console.log ('testfind: ' + doc)
+    var date = new Date;
+    var today = formatDate (date); 
 
     var invContent = [];
     for (i = 0; i < invoice.items.length; i++) {
@@ -221,14 +232,17 @@ function invoiceToDB (invoice, doc) {
         })}
     
         var maxNumber = doc[0].invNumber;
+        console.log("invoice.shipping.sum: " + invoice.shipping.sum)
         
     Invoice = new invoicem ({
     invNumber: maxNumber+1,
     booking_no: invoice.general.bookingno,
-    date: 24/05/2020,
+    //date: {$currentDate},
     client: invoice.shipping.client_id,
     ourCompany: invoice.shipping.ourCo,
-	invContent: invContent
+    invContent: invContent,
+    sum: invoice.shipping.sum
+    
     })
     
         Invoice.save (function(err, invoice) {
@@ -265,11 +279,11 @@ return client
 app.use('/test', (req, res) => {
 
     var invContent =JSON.parse(req.query.invContent)
-//var description = invContent[0]["service"] + "; " + invContent[0]["cntrs"];
 var cntr_numbers =JSON.parse(req.query.cntr_numbers);
 cntr_numbers=cntr_numbers.cntrs;
 var ourCo = req.query.ourCo;
-//console.log(ourCo);
+var sum= req.query.sum;
+console.log(sum);
 var client=req.query.client; 
 //console.log (client);
 client=client.split(",");
@@ -313,7 +327,8 @@ invContent.forEach(function(line){
         //state: "CA",
         //country: "Russia",
         //postal_code: 94111, 
-        ourCompany: ourCo
+        ourCompany: ourCo,
+        sum: sum
       },
       general: {
         POL: firstline.POL,
