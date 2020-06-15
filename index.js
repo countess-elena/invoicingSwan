@@ -13,6 +13,8 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const _ = require('lodash');
 
+const Papaparse=require('papaparse');
+
 app.use(fileUpload({
     createParentPath: true
 }));
@@ -191,9 +193,56 @@ res.json ({'msg': "uploaded xls"});
 
 require('pdfkit') ;
 
+function download (doc) {
+    
+    //console.log (doc)
+    let invoicesHandled = []; 
+    //let tableLine = []; 
+    let invoices = doc;
+    invoices.forEach(invoice => {
+      invoice.invContent.forEach (invLine =>{
+        invLine.cntrs.forEach (cntr=>{
+          invoicesHandled.push ([invoice.invNumber, invoice.booking_no, invLine.service, invLine.price, cntr]);
+        })
+      })
+  
+    });
+    //console.log(invoicesHandled);
+  
+    var csv = Papaparse.unparse(invoicesHandled);
+    console.log (csv);
+    return csv; 
+    
+  }
+
+ function uploadFile (doc) {
+
+    const fs = require('fs');
+    //C:\Users\count\edxreact
+
+fs.writeFile('file.csv', doc, function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    console.log("The file was saved!");
+}); 
+
+  }
+
+
+app.use ('/dowloadInvoices', (req,res)=>{
+        invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (function (err,doc){
+        let fileD=download(doc); 
+        uploadFile(fileD);
+        const file ='file.csv';
+        console.log (file);
+        res.download(file);
+    })
+    
+    })
+
 app.use ('/getInvoices', (req,res)=>{
 invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (function (err,doc){
-    //let resp = JSON.parse(doc); 
     console.log(doc);
     res.json(doc);
 })
