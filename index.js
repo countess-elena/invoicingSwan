@@ -18,7 +18,9 @@ const Papaparse=require('papaparse');
 app.use(fileUpload({
     createParentPath: true
 }));
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000'
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(morgan('dev'));
@@ -229,6 +231,16 @@ fs.writeFile('file.csv', doc, function(err) {
 
   }
 
+  app.use ('/oneInvoice', (req,res)=>{
+    invoicem.find({invNumber: req.query.invNumber}, {_id:0}).populate('client', 'name').exec (function (err,doc){
+        console.log(doc);
+        res.json(doc);
+    })
+    
+    }
+    
+    )
+
 
 app.use ('/dowloadInvoices', (req,res)=>{
         invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (function (err,doc){
@@ -269,13 +281,14 @@ function invoiceToDB (invoice, doc) {
     var date = new Date;
     var today = formatDate (date); 
 
-    var invContent = [];
+    var invCont = [];
     for (i = 0; i < invoice.items.length; i++) {
         const item = invoice.items[i];
-        invContent.push({
+        var price = item.amount;
+        invCont.push({
             cntrs: item.cntrs, 
             curr: item.currency,
-            price: item.amount,
+            price: price,
             qty: item.quantity,
             service: item.description
         })}
@@ -289,7 +302,7 @@ function invoiceToDB (invoice, doc) {
     //date: {$currentDate},
     client: invoice.shipping.client_id,
     ourCompany: invoice.shipping.ourCo,
-    invContent: invContent,
+    invContent: invCont,
     sum: invoice.shipping.sum
     
     })
@@ -346,7 +359,7 @@ let number=0;
 
 
 invContent.forEach(function(line){
-    total+=Number(line["price"])*Number(line["qty"])*100;
+    total+=Number(line["price"])*Number(line["qty"]);
     number+=1;
     newinvContent.push ({
         item: number, 
@@ -354,7 +367,7 @@ invContent.forEach(function(line){
         cntrs: line["cntrs"],
         quantity: line ["qty"],
         currency: line.curr,
-        amount: Number(line["price"])*Number(line["qty"])*100,
+        amount: Number(line["price"]),
         type: line.type,
         //client: clientId
     })
