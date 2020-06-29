@@ -34,7 +34,7 @@ stream.on('finish', function() {
 
     function generateHeader(doc, invoice) {
         doc
-          .image("548187154.jpeg", 50, 45, { width: 50 })
+          .image("SLOY.jpg", 50, 10, { width: 500 })
           .fillColor("#444444")
           .fontSize(20)
           .text(invoice.shipping.ourCompany, 110, 57)
