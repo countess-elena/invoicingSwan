@@ -14,6 +14,7 @@ const morgan = require('morgan');
 const _ = require('lodash');
 
 const Papaparse=require('papaparse');
+const { isEmpty } = require('lodash');
 
 app.use(fileUpload({
     createParentPath: true
@@ -266,6 +267,7 @@ invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (f
 function testfind(invoice) {
     invoicem.find ({}, 'invNumber').sort('-invNumber').exec (function(err, doc){
         invoiceToDB(invoice, doc);
+
     })
 }
 
@@ -277,12 +279,12 @@ function formatDate(date) {
       }
 
 function invoiceToDB (invoice, doc) {
-    console.log ('testfind: ' + doc)
+    console.log ('testfind: ' + doc[0])
     var date = new Date;
     var today = formatDate (date); 
 
     var invCont = [];
-    for (i = 0; i < invoice.items.length; i++) {
+    for (i = 0; i < invoice.items.length; i++) {    
         const item = invoice.items[i];
         var price = item.amount;
         invCont.push({
@@ -292,8 +294,9 @@ function invoiceToDB (invoice, doc) {
             qty: item.quantity,
             service: item.description
         })}
-    
-        var maxNumber = doc[0].invNumber;
+        if (doc[0]!=undefined){
+        var maxNumber = doc[0].invNumber;}
+        else {maxNumber=0};
         console.log("invoice.shipping.sum: " + invoice.shipping.sum)
         
     Invoice = new invoicem ({
