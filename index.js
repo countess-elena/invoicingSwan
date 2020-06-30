@@ -263,6 +263,41 @@ invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (f
 }
 
 )
+function updateInvoice (invoice) {
+    console.log ("update invoice check ")
+    var invNumber=invoice.general.invNumber;
+    var invCont = [];
+    var sum=0;
+    var ourCompany= invoice.shipping.ourCompany;
+    console.log (ourCompany);
+    for (i = 0; i < invoice.items.length; i++) {    
+        const item = invoice.items[i];
+        var price = item.amount;
+        invCont.push({
+            cntrs: item.cntrs, 
+            curr: item.currency,
+            price: price,
+            qty: item.quantity,
+            service: item.description
+        })
+        sum+=price*item.quantity;
+    }
+        
+    var invUpdated = {
+    booking_no: invoice.general.bookingno,
+    client: invoice.shipping.client_id,
+    ourCompany: ourCompany,
+    invContent: invCont,
+    sum: sum
+}
+    
+    console.log (invUpdated);
+
+    invoicem.findOneAndUpdate ( {invNumber: invNumber}, invUpdated , function(err, doc){
+        if (err) console.log (err);
+    console.log ('Succesfully saved.');
+    });
+}
 
 function testfind(invoice) {
     invoicem.find ({}, 'invNumber').sort('-invNumber').exec (function(err, doc){
@@ -282,7 +317,7 @@ function invoiceToDB (invoice, doc) {
     console.log ('testfind: ' + doc[0])
     var date = new Date;
     var today = formatDate (date); 
-
+var sum = 0; 
     var invCont = [];
     for (i = 0; i < invoice.items.length; i++) {    
         const item = invoice.items[i];
@@ -293,7 +328,9 @@ function invoiceToDB (invoice, doc) {
             price: price,
             qty: item.quantity,
             service: item.description
-        })}
+        })
+        sum+=price*item.quantity;
+    }
         if (doc[0]!=undefined){
         var maxNumber = doc[0].invNumber;}
         else {maxNumber=0};
@@ -306,7 +343,7 @@ function invoiceToDB (invoice, doc) {
     client: invoice.shipping.client_id,
     ourCompany: invoice.shipping.ourCo,
     invContent: invCont,
-    sum: invoice.shipping.sum
+    sum: sum
     
     })
     
@@ -343,14 +380,14 @@ return client
 //загрузка пдф
 app.use('/test', (req, res) => {
 
-    var invContent =JSON.parse(req.query.invContent)
+var invContent =JSON.parse(req.query.invContent)
 var cntr_numbers =JSON.parse(req.query.cntr_numbers);
+var invNumber = req.query.invNumber;
 cntr_numbers=cntr_numbers.cntrs;
 var ourCo = req.query.ourCo;
 var sum= req.query.sum;
-console.log(sum);
 var client=req.query.client; 
-//console.log (client);
+console.log (ourCo);
 client=client.split(",");
 //console.log(client); 
 var apiResponce =JSON.parse(req.query.apiResponce);
@@ -402,7 +439,8 @@ invContent.forEach(function(line){
         bookingno: firstline.bookingno,
         client: firstline.Client,
         cntr_numbers: cntr_numbers,
-        currency: invContent[0].currency
+        currency: invContent[0].currency,
+        invNumber: invNumber
       },
       items: newinvContent,
       
@@ -412,7 +450,12 @@ invContent.forEach(function(line){
     };
     
     createInvoice(invoice, "invoice.pdf");
-    testfind (invoice);
+    if (invNumber=="") {
+    testfind (invoice);}
+
+    else {
+        updateInvoice (invoice);
+    }
 
 
  res.json ({'msg': "check pdf file"}); 
