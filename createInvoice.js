@@ -5,7 +5,7 @@ var currency="";
 
 function createInvoice(invoice, path) {
 // Create a document
-const doc = new PDFDocument({ size: "A4", margin: 50 });
+const doc = new PDFDocument({ size: "A4", margin: 40 });
 currency=invoice.items[0].currency;
 console.log (currency);
 
@@ -33,15 +33,27 @@ stream.on('finish', function() {
 };
 
     function generateHeader(doc, invoice) {
+      var address = "";
+      var bank = "OP CORPORATE BANK PLC";
+      var address = "HELSINKI, FINLAND";
+      var swift = "OKOYFIHH"; 
+      var ibanEuro = "FI57 5000 0120 4000 63"
+      var ibanUsd = "FI79 5000 0131 1089 52"
         doc
-          .image("SLOY.jpg", 50, 10, { width: 500 })
+          .image("SLOY.jpg", 50, 0, { width: 600 })
           .fillColor("#444444")
           .fontSize(20)
-          .text(invoice.shipping.ourCompany, 110, 57)
           .fontSize(10)
-          .text(invoice.shipping.ourCompany, 200, 50, { align: "right" })
-          .text("123 Main Street", 200, 65, { align: "right" })
-          .text("New York, NY, 10025", 200, 80, { align: "right" })
+          .text("Beneficiary: " + invoice.shipping.ourCompany, 350, 90, {height: 7})
+          .text("Bank: "+bank,{fontSize: 7}) 
+          .text(address, {height: 7})
+          .text("SWIFT: " + swift)
+          .text ("IBAN (EUR): " + ibanEuro)
+          .text ("IBAN (USD): " + ibanUsd)
+          .fontSize(15)
+          .text (invoice.shipping.name, 50, 90)
+          .text (invoice.shipping.address)
+         
           .moveDown();
       }
 
@@ -68,13 +80,15 @@ stream.on('finish', function() {
       function generateCustomerInformation(doc, invoice) {
         doc
           .fillColor("#444444")
-          .fontSize(20)
-          .text("Invoice", 50, 160);
+          .fontSize(15)
+          .text("Invoice: "+ invoice.invoice_nr , 50, 160)
+          .fontSize(13)
+          .text ("Date: "+ formatDate(new Date()))
       
-        generateHr(doc, 185);
+        //generateHr(doc, 185);
       
         const customerInformationTop = 200;
-      
+      /*
         doc
           .fontSize(10)
           .text("Invoice Number:", 50, customerInformationTop)
@@ -90,7 +104,7 @@ stream.on('finish', function() {
             150,
             customerInformationTop + 30
           )
-          */
+          
       
           .font("Helvetica-Bold")
           .text(invoice.shipping.name, 300, customerInformationTop)
@@ -98,6 +112,7 @@ stream.on('finish', function() {
           .text(invoice.shipping.address, 300, customerInformationTop + 15)
           
           .text(
+            
             /*
             invoice.shipping.city +
               ", " +
@@ -108,11 +123,12 @@ stream.on('finish', function() {
             300,
             
             customerInformationTop + 30
-            */
+            
           )
           .moveDown();
+          */
       
-        generateHr(doc, 252);
+        //generateHr(doc, 252);
       }
       
       function generateInvoiceTable(doc, invoice) {
@@ -125,9 +141,9 @@ stream.on('finish', function() {
           invoiceTableTop,
           "Item",
           "Description",
-          "Unit Cost",
-          "Quantity",
-          "Line Total"
+          "Price",
+          "QTE",
+          "Amount"
         );
         generateHr(doc, invoiceTableTop + 20);
         doc.font("Helvetica");
@@ -140,15 +156,16 @@ stream.on('finish', function() {
             position,
             item.item,
             item.description,
-            formatCurrency(item.amount / item.quantity),
+            formatCurrency(item.amount*100),
             item.quantity,
-            formatCurrency(item.amount)
+            formatCurrency(item.amount*item.quantity*100)
           );
       
           generateHr(doc, position + 20);
         }
       
         const subtotalPosition = invoiceTableTop + (i + 1) * 30;
+        /*
         generateTableRow(
           doc,
           subtotalPosition,
@@ -181,18 +198,28 @@ stream.on('finish', function() {
           "",
           formatCurrency(invoice.subtotal - invoice.paid)
         );
+        */
         doc.font("Helvetica");
       }
       
+      
       function generateFooter(doc) {
+        generateHr(doc, 645);
+        generateHr(doc, 665);
+
         doc
           .fontSize(10)
           .text(
-            "Payment is due within 15 days. Thank you for your business.",
+            "TOTAL: " ,
             50,
-            780,
-            { align: "center", width: 500 }
-          );
+            650,
+            { align: "right"}
+          )
+          .text ("VAT = 0%, International freight service", 50, 670, {align: 'center'})
+          .text ("ALL BANK CHARGES ARE FOR ACCOUNT OF PAYER",  {align: 'center'})
+          .text ("Valid without signature", {align: 'center'})
+          .image("SLOY_footer.jpg", 50, 750, { width: 600 })
+
       }
       
       function generateTableRow(
@@ -207,7 +234,7 @@ stream.on('finish', function() {
         doc
           .fontSize(10)
           .text(item, 50, y)
-          .text(description, 75, y)
+          .text(description, 75, y, {width: 240, height: 30, align: "left"})
           .text(unitCost, 280, y, { width: 90, align: "right" })
           .text(quantity, 370, y, { width: 90, align: "right" })
           .text(lineTotal, 0, y, { align: "right" });
