@@ -15,6 +15,10 @@ const _ = require('lodash');
 
 const Papaparse=require('papaparse');
 const { isEmpty } = require('lodash');
+const download = require('downloadjs');
+path = require('path');
+
+//import download from 'downloadjs';
 
 app.use(fileUpload({
     createParentPath: true
@@ -196,24 +200,30 @@ res.json ({'msg': "uploaded xls"});
 
 require('pdfkit') ;
 
-function download (doc) {
+function downloadf (doc) {
     
-    //console.log (doc)
+   // console.log (doc)
     let invoicesHandled = []; 
-    //let tableLine = []; 
     let invoices = doc;
     invoices.forEach(invoice => {
       invoice.invContent.forEach (invLine =>{
         invLine.cntrs.forEach (cntr=>{
-          invoicesHandled.push ([invoice.invNumber, invoice.booking_no, invLine.service, invLine.price, cntr]);
+            var serv = invLine.service.split(';')
+            var date = JSON.stringify(invoice.date).substring(1,11);
+            //date=date.substring (1,11);
+            console.log(date)
+            var client = invoice.client.name
+            //var client = invoice.client.split(',')
+            //cleint = client[1]; 
+          invoicesHandled.push ([ invoice.booking_no, cntr, client, invoice.invNumber, date, serv[0], invLine.price, invLine.curr, invoice.ourCompany ]);
         })
       })
   
     });
     //console.log(invoicesHandled);
   
-    var csv = Papaparse.unparse(invoicesHandled);
-    console.log (csv);
+    var csv = Papaparse.unparse(invoicesHandled, {escapeChar: '"', delimiter: ';'});
+    //console.log (csv);
     return csv; 
     
   }
@@ -223,11 +233,12 @@ function download (doc) {
     const fs = require('fs');
     //C:\Users\count\edxreact
 
-fs.writeFile('file.csv', doc, function(err) {
+fs.writeFile('fileindex.csv', doc, function(err) {
     if(err) {
         return console.log(err);
     }
-    console.log("The file was saved!");
+    else {
+    console.log("The file was saved!");}
 }); 
 
   }
@@ -244,14 +255,11 @@ fs.writeFile('file.csv', doc, function(err) {
 
 
 app.use ('/dowloadInvoices', (req,res)=>{
-        invoicem.find({}, {_id:0}).sort('-invNumber').populate('client', 'name').exec (function (err,doc){
-        let fileD=download(doc); 
-        uploadFile(fileD);
-        const file ='file.csv';
-        console.log (file);
-        res.download(file);
+        invoicem.find({}, {_id:0}).sort('-invNumber').populate({path: 'client', select: 'name -_id'}).exec (function (err,doc){
+        let fileD=downloadf(doc); 
+        uploadFile(fileD);     
     })
-    
+    res.download ("fileindex.csv", "invoices_downloaded.csv")
     })
 
 app.use ('/getInvoices', (req,res)=>{

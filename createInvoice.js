@@ -233,10 +233,10 @@ stream.on('finish', function() {
       ) {
         doc
           .fontSize(10)
-          .text(item, 50, y)
-          .text(description, 75, y, {width: 240, height: 30, align: "left"})
-          .text(unitCost, 280, y, { width: 90, align: "right" })
-          .text(quantity, 370, y, { width: 90, align: "right" })
+          //.text(item, 50, y)
+          .text(description, 50, y, {width: 240, height: 30, align: "left"})
+          .text(unitCost, 360, y, { width: 90, align: "left" })
+          .text(quantity, 380, y, { width: 90, align: "right" })
           .text(lineTotal, 0, y, { align: "right" });
       }
       
