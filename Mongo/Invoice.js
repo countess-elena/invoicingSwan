@@ -22,13 +22,15 @@ var invoiceSchema = new Schema( {
     client: {type:mongoose.Schema.Types.ObjectId, ref:'Client'},
     ourCompany: String,
     sum: Number,
+    paymentDate: {type: Date},
 	invContent: [
         {
             cntrs: [String], 
             curr: String,
             price: Number,
             qty: Number,
-            service: String,
+            service: String
+            
             
         }
     ],
