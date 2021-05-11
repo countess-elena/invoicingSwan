@@ -17,7 +17,7 @@
     "express-fileupload": "^1.1.7-alpha.3",
     "formidable": "^1.2.2",
     "jspdf": "^1.5.3",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "mongodb": "^3.5.7",
     "mongoose": "^5.9.15",
     "morgan": "^1.10.0",
